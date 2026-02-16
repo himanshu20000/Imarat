@@ -131,35 +131,31 @@ const ImageSequenceHero = ({ onLoad, preloaderComplete }) => {
 
         const ctx = gsap.context(() => {
             if (isSmallScreen) {
-                // Mobile/Tablet approach: Hybrid logic
-                // 1. Independent Frame Playback (Timed) - Ensures persistence
-                gsap.to(frameIndex.current, {
+                // Mobile/Tablet: Fully independent, time-based "Showreel"
+                // No ScrollTrigger here = static 100vh section with no track
+                if (!preloaderComplete) return;
+
+                const mobileShowreel = gsap.timeline();
+
+                // 1. Image Sequence: 4s smooth playback
+                mobileShowreel.to(frameIndex.current, {
                     value: frameCount - 1,
                     duration: 4,
                     ease: 'none',
-                    scrollTrigger: {
-                        trigger: container,
-                        start: 'top top',
-                        end: '+=150%', // Create 150vh of scroll track
-                        pin: true,
-                        pinSpacing: true, // GSAP Perfect Boundary
-                        toggleActions: 'play none none none', // Persistent frames
-                    }
                 });
 
-                // 2. Scrub-based Overlay (Reactive) - Light curve
-                const overlayTl = gsap.timeline({
-                    scrollTrigger: {
-                        trigger: container,
-                        start: 'top top',
-                        end: '+=150%',
-                        scrub: true,
-                    }
-                });
+                // 2. Light Overlay Curve: Synced to showreel
+                mobileShowreel.to('.image-sequence-hero__overlay', {
+                    opacity: 0.4,
+                    duration: 2,
+                    ease: 'power1.inOut'
+                }, 0);
 
-                overlayTl
-                    .to('.image-sequence-hero__overlay', { opacity: 0.4, duration: 1 })
-                    .to('.image-sequence-hero__overlay', { opacity: 0.1, duration: 1 });
+                mobileShowreel.to('.image-sequence-hero__overlay', {
+                    opacity: 0.1,
+                    duration: 2,
+                    ease: 'power1.inOut'
+                }, 2);
 
             } else {
                 // Desktop approach: High-precision scrubbing for everything
@@ -200,7 +196,7 @@ const ImageSequenceHero = ({ onLoad, preloaderComplete }) => {
             gsap.ticker.remove(render);
             ctx.revert(); // Automatically kills all ScrollTriggers and animations
         };
-    }, [imagesLoaded]);
+    }, [imagesLoaded, preloaderComplete]);
 
     return (
         <div ref={containerRef} className="image-sequence-hero">
