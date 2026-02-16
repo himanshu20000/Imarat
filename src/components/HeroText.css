@@ -17,6 +17,9 @@
     gap: 3.5rem;
     padding-left: 5%;
     padding-right: 5%;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
 }
 
 .hero-text__title {
@@ -32,6 +35,8 @@
     max-width: 900px;
     /* Layout containment */
     text-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
 }
 
 .hero-text__accent {
@@ -69,6 +74,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
 }
 
 .hero-text__button-content {

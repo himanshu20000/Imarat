@@ -26,13 +26,7 @@ const Navbar = () => {
 
                 <ul className="navbar__menu">
                     <li className="navbar__item">
-                        <a href="#work" className="navbar__link">Work</a>
-                    </li>
-                    <li className="navbar__item">
-                        <a href="#about" className="navbar__link">About</a>
-                    </li>
-                    <li className="navbar__item">
-                        <a href="#contact" className="navbar__link">Contact</a>
+                        Home
                     </li>
                 </ul>
             </div>

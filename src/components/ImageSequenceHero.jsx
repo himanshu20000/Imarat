@@ -29,7 +29,12 @@ const ImageSequenceHero = ({ onLoad }) => {
 
                 imagePromises.push(
                     new Promise((resolve, reject) => {
-                        img.onload = () => resolve(img);
+                        img.onload = () => {
+                            // Pre-decode the image to offload decompression to the GPU/background
+                            img.decode()
+                                .then(() => resolve(img))
+                                .catch(() => resolve(img)); // Fallback if decode fails
+                        };
                         img.onerror = () => reject(new Error(`Failed to load frame ${i}`));
                     })
                 );
@@ -57,18 +62,12 @@ const ImageSequenceHero = ({ onLoad }) => {
         const context = canvas.getContext('2d');
         const container = containerRef.current;
 
-        const render = () => {
-            const index = Math.min(Math.floor(frameIndex.current.value), frameCount - 1);
-            const img = images.current[index];
-            if (!img || !img.complete) return;
+        // Cache drawing parameters to avoid re-calculating every frame
+        let cachedDrawParams = null;
 
-            context.imageSmoothingEnabled = true;
-            context.imageSmoothingQuality = 'high';
-            context.clearRect(0, 0, canvas.width, canvas.height);
-
+        const calculateDrawParams = (img) => {
             const imgAspect = img.width / img.height;
             const canvasAspect = canvas.width / canvas.height;
-
             let drawWidth, drawHeight, offsetX, offsetY;
 
             if (canvasAspect > imgAspect) {
@@ -82,50 +81,121 @@ const ImageSequenceHero = ({ onLoad }) => {
             offsetX = (canvas.width - drawWidth) / 2;
             offsetY = (canvas.height - drawHeight) / 2;
 
+            return { offsetX, offsetY, drawWidth, drawHeight };
+        };
+
+        let lastIndex = -1;
+        const render = () => {
+            const index = Math.min(Math.floor(frameIndex.current.value), frameCount - 1);
+
+            // Avoid redundant draws if the index hasn't changed
+            if (index === lastIndex) return;
+            lastIndex = index;
+
+            const img = images.current[index];
+            if (!img || !img.complete) return;
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!cachedDrawParams) {
+                cachedDrawParams = calculateDrawParams(img);
+            }
+
+            const { offsetX, offsetY, drawWidth, drawHeight } = cachedDrawParams;
             context.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         };
 
         const setCanvasSize = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Clear cache on resize
+            cachedDrawParams = null;
             render();
         };
 
         setCanvasSize();
         window.addEventListener('resize', setCanvasSize);
-        render();
 
-        // GSAP ScrollTrigger animation
-        const animation = gsap.to(frameIndex.current, {
-            value: frameCount - 1,
-            ease: 'none',
-            scrollTrigger: {
-                trigger: container,
-                start: 'top top',
-                end: 'bottom top',
-                scrub: true,
-                pin: true,
-                anticipatePin: 1,
-            },
-            onUpdate: render,
-        });
+        // Detect small screens (Mobile/Tablet) for independent playback
+        const isSmallScreen = window.innerWidth < 1024;
 
-        // Background dimming effect on scroll
-        gsap.to('.image-sequence-hero__overlay', {
-            scrollTrigger: {
-                trigger: container,
-                start: 'top top',
-                end: 'center center',
-                scrub: 0.5,
-            },
-            opacity: 0.85,
-            ease: 'none'
-        });
+        // Ensure smoothing is set once
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'medium';
+
+        // Use GSAP ticker for high-performance rendering synchronized with refresh rate
+        gsap.ticker.add(render);
+
+        const ctx = gsap.context(() => {
+            if (isSmallScreen) {
+                // Mobile/Tablet approach: Hybrid logic
+                // 1. Independent Frame Playback (Timed) - Ensures no "hanging"
+                gsap.to(frameIndex.current, {
+                    value: frameCount - 1,
+                    duration: 4,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: container,
+                        start: 'top top',
+                        end: 'bottom bottom',
+                        pin: true,
+                        pinSpacing: false,
+                        toggleActions: 'play none none reverse',
+                    }
+                });
+
+                // 2. Scrub-based Overlay (Reactive) - Light curve with bottom clarity
+                const overlayTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: container,
+                        start: 'top top',
+                        end: 'bottom bottom',
+                        scrub: true,
+                    }
+                });
+
+                overlayTl
+                    .to('.image-sequence-hero__overlay', { opacity: 0.4, duration: 1 })
+                    .to('.image-sequence-hero__overlay', { opacity: 0.1, duration: 1 });
+
+            } else {
+                // Desktop approach: High-precision scrubbing for everything
+                const desktopTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: container,
+                        start: 'top top',
+                        end: 'bottom bottom',
+                        scrub: true,
+                        pin: true,
+                        pinSpacing: false,
+                    }
+                });
+
+                desktopTl.to(frameIndex.current, {
+                    value: frameCount - 1,
+                    ease: 'none',
+                });
+
+                // Dim background independently - Light curve
+                const desktopOverlayTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: container,
+                        start: 'top top',
+                        end: 'bottom bottom',
+                        scrub: true,
+                    }
+                });
+
+                desktopOverlayTl
+                    .to('.image-sequence-hero__overlay', { opacity: 0.4, duration: 1 })
+                    .to('.image-sequence-hero__overlay', { opacity: 0.1, duration: 1 });
+            }
+        }, container);
 
         return () => {
             window.removeEventListener('resize', setCanvasSize);
-            animation.scrollTrigger?.kill();
-            animation.kill();
+            gsap.ticker.remove(render);
+            ctx.revert(); // Automatically kills all ScrollTriggers and animations
         };
     }, [imagesLoaded]);
 

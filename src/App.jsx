@@ -60,16 +60,16 @@ function App() {
                 <Navbar />
                 <ImageSequenceHero onLoad={(status) => setImagesLoaded(status)} />
 
-                <section className="content-section" id="work">
+                {/* <section className="content-section" id="work">
                     <div className="container">
                         <h2 className="section-title">Selected Work</h2>
                         <p className="section-description">
                             Explore our architectural storytelling through motion.
                         </p>
                     </div>
-                </section>
+                </section> */}
 
-                <section className="content-section content-section--dark" id="about">
+                {/* <section className="content-section content-section--dark" id="about">
                     <div className="container">
                         <h2 className="section-title">The Imarat Vision</h2>
                         <p className="section-description">
@@ -85,7 +85,7 @@ function App() {
                             Elevate your next project with us.
                         </p>
                     </div>
-                </section>
+                </section> */}
             </div>
         </div>
     );
