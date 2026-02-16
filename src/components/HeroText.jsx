@@ -26,13 +26,14 @@ const HeroText = () => {
                     {
                         scrollTrigger: {
                             trigger: container,
-                            start: '10% top',
-                            end: '80% top', // Complete before full bottom for visual comfort
-                            scrub: true,
+                            start: 'top top',
+                            toggleActions: 'play none none none',
                         },
                         opacity: 1,
                         scale: 1,
                         y: 0,
+                        duration: 1.5,
+                        delay: 0.5,
                         ease: 'power3.out',
                     }
                 );
