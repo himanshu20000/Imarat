@@ -1,8 +1,8 @@
 .image-sequence-hero {
     position: relative;
     width: 100%;
-    height: 300vh;
-    /* Extended track for single-page cinematic narrative */
+    height: 100vh;
+    /* Base height only; GSAP pinSpacing will create the scroll track */
     background: #000000;
     overflow: hidden;
 }
@@ -32,22 +32,9 @@
 
 /* Responsive Optimizations */
 @media (max-width: 1024px) {
-    .image-sequence-hero {
-        height: 160vh;
-    }
+    /* Container remains 100vh; GSAP handles the padding */
 }
 
-@media (max-width: 768px) {
-    .image-sequence-hero {
-        height: 120vh;
-        /* Reduced height for easier mobile navigation */
-    }
+@media (max-width: 768px) {}
 
-
-}
-
-@media (max-width: 480px) {
-    .image-sequence-hero {
-        height: 110vh;
-    }
-}
+@media (max-width: 480px) {}

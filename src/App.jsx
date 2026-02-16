@@ -58,7 +58,10 @@ function App() {
                 visibility: preloaderComplete ? 'visible' : 'hidden'
             }}>
                 <Navbar />
-                <ImageSequenceHero onLoad={(status) => setImagesLoaded(status)} />
+                <ImageSequenceHero
+                    onLoad={(status) => setImagesLoaded(status)}
+                    preloaderComplete={preloaderComplete}
+                />
 
                 {/* <section className="content-section" id="work">
                     <div className="container">

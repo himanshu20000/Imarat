@@ -6,7 +6,7 @@ import './ImageSequenceHero.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const ImageSequenceHero = ({ onLoad }) => {
+const ImageSequenceHero = ({ onLoad, preloaderComplete }) => {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -126,10 +126,13 @@ const ImageSequenceHero = ({ onLoad }) => {
         // Use GSAP ticker for high-performance rendering synchronized with refresh rate
         gsap.ticker.add(render);
 
+        // Immediate render to guarantee frame 0 visibility
+        render();
+
         const ctx = gsap.context(() => {
             if (isSmallScreen) {
                 // Mobile/Tablet approach: Hybrid logic
-                // 1. Independent Frame Playback (Timed) - Ensures no "hanging"
+                // 1. Independent Frame Playback (Timed) - Ensures persistence
                 gsap.to(frameIndex.current, {
                     value: frameCount - 1,
                     duration: 4,
@@ -137,19 +140,19 @@ const ImageSequenceHero = ({ onLoad }) => {
                     scrollTrigger: {
                         trigger: container,
                         start: 'top top',
-                        end: 'bottom bottom',
+                        end: '+=150%', // Create 150vh of scroll track
                         pin: true,
-                        pinSpacing: false,
-                        toggleActions: 'play none none reverse',
+                        pinSpacing: true, // GSAP Perfect Boundary
+                        toggleActions: 'play none none none', // Persistent frames
                     }
                 });
 
-                // 2. Scrub-based Overlay (Reactive) - Light curve with bottom clarity
+                // 2. Scrub-based Overlay (Reactive) - Light curve
                 const overlayTl = gsap.timeline({
                     scrollTrigger: {
                         trigger: container,
                         start: 'top top',
-                        end: 'bottom bottom',
+                        end: '+=150%',
                         scrub: true,
                     }
                 });
@@ -164,10 +167,10 @@ const ImageSequenceHero = ({ onLoad }) => {
                     scrollTrigger: {
                         trigger: container,
                         start: 'top top',
-                        end: 'bottom bottom',
+                        end: '+=200%', // Create 200vh of scroll track
                         scrub: true,
                         pin: true,
-                        pinSpacing: false,
+                        pinSpacing: true, // GSAP Perfect Boundary
                     }
                 });
 
@@ -181,7 +184,7 @@ const ImageSequenceHero = ({ onLoad }) => {
                     scrollTrigger: {
                         trigger: container,
                         start: 'top top',
-                        end: 'bottom bottom',
+                        end: '+=200%',
                         scrub: true,
                     }
                 });
@@ -203,7 +206,7 @@ const ImageSequenceHero = ({ onLoad }) => {
         <div ref={containerRef} className="image-sequence-hero">
             <canvas ref={canvasRef} className="image-sequence-hero__canvas" />
             <div className="image-sequence-hero__overlay" />
-            <HeroText />
+            <HeroText preloaderComplete={preloaderComplete} />
         </div>
     );
 };
